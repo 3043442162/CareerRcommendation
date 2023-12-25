@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8" >
+<!--    <meta http-equiv="Access-Control-Allow-Origin" content="*" />-->
+    <title>myTestHTML</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/vs.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/javascript.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="http://flowchart.js.org/flowchart-latest.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        /* Add some basic styling */
+        content {
+            margin: 0 auto;
+            width: 500px;
+            height: 500px;
+            background: skyblue;
+        }
+        ul {
+            width: 100%;
+            height: 50px;
+            background: rgba(102, 51, 153, 0.5);
+            text-align: center;
+            line-height: 50px;
+        }
+        #content ul:nth-child(2) {
+            background: rgba(255, 0, 0, 0.5);
+        }
+        #editor {
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            width: 80%;
+            height: 400px;
+            padding: 10px;
+            border: 1px solid #c2c2c2;
+        }
+        #line-numbers {
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            width: 1%;
+            height: 400px;
+            padding: 10px;
+            border: 1px solid #c2c2c2;
+            float: left;
+            background-color: #f6f8fa;
+            color: #777;
+            text-align: center;
+            overflow: hidden;
+        }
+        #submit-btn {
+            margin-top: 10px;
+            display: block;
+        }
+    </style>
+    <!-- 程序将在导入整个script代码段后执行-->
+
+</head>
+<body>
+<form id="code-form">
+    <div id="line-numbers">
+        <span>1</span><br>
+    </div>
+    <textarea id="editor" name="code"></textarea>
+    <div style="clear: both;"></div>
+<!--    <input type="file" id="file-input" accept=".txt">-->
+    <button id="submit-btn" type="button">submit</button>
+</form>
+<!--<iframe name="code-form" id="form" style="display:none"></iframe>-->
+<div id="diagram"></div>
+</body>
+<script>
+    // 加载后注册监听
+    document.addEventListener('DOMContentLoaded', function() {
+        // Highlight.js initialization
+        hljs.initHighlightingOnLoad();
+
+        // Update line numbers
+        const codeArea = document.getElementById('editor');
+        codeArea.addEventListener('input', function() {
+            const code = codeArea.value;
+            const lineNumbers = document.getElementById('line-numbers');
+            const lines = code.split('\n');
+            let lineNumbersHTML = '';
+            for (let i = 0; i < lines.length; i++) {
+                lineNumbersHTML += '<span>' + (i+1) + '</span><br>';
+            }
+            lineNumbers.innerHTML = lineNumbersHTML;
+        });
+
+
+        // Handle form submission
+        const button = document.getElementById('submit-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        button.addEventListener('click', function(event) {
+            console.log("按钮已经点击了")
+            event.preventDefault();
+            const code = codeArea.value;
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", 'http://localhost:8082/position/result?code=' + encodeURIComponent(code), true)
+            xhr.send()
+
+            // xhr.onreadystatechange = function(){
+            //     if (xhr.readyState === 4){
+            //         if (xhr.status>=200 && xhr.status < 300){
+            //             console.log(xhr.response)
+            //             var diagram = flowchart.parse(xhr.response)
+            //             diagram.drawSVG('diagram', {
+            //                 'flowstate' : {
+            //                     'past' : { 'fill' : '#CCCCCC', 'font-size' : 12},// 首尾颜色
+            //                     // 'current' : {'fill' : 'red', 'font-color' : 'red', 'font-weight' : 'bold'},
+            //                     'future' : { 'fill' : '#F0F8FF'}, // 默认颜色
+            //                     'invalid': {'fill' : '#444444'}, // 普通输入输出以及赋值颜色
+            //                     'approved' : { 'fill' : '#58C4A3', 'font-size' : 12, 'yes-text' : 'APPROVED', 'no-text' : 'n/a' },
+            //                     // 'rejected' : { 'fill' : '#C45879', 'font-size' : 12, 'yes-text' : 'n/a', 'no-text' : 'REJECTED' }
+            //                 }
+            //             });
+            //         }
+            //         else {
+            //             console.log("您的返回状态为"+xhr.status)
+            //         }
+            //     }
+            //     else{
+            //         console.log("未成功接收全部请求")
+            //     }
+            // }
+            // 状态发生改变
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4){
+                    if(xhr.status >= 200 && xhr.status < 300){
+                        console.log(xhr.response)
+                        let htmlObj = document.getElementById('diagram')
+                        if (htmlObj) {
+                            // 创建li元素
+                            var li = document.createElement('ul')
+                            // 向li中添加文本内容
+                            li.innerHTML = xhr.response
+                            // 向指定div中插入li
+                            htmlObj.appendChild(li);
+                        } else {
+                            console.log('没有返回')
+                        }
+                    }
+                }
+            }
+        })
+    })
+</script>
+</html>
