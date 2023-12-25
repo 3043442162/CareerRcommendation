@@ -27,16 +27,16 @@ def agg(line):
 # conf = SparkConf().setMaster("spark://192.168.10.100:8080").setAppName("test").set("spark.driver.host", "192.168.10.100")
 spark = SparkSession.\
     builder\
-    .config("spark.executor.memory", "10g")\
-    .config("spark.driver.memory", "4g")\
-    .config("spark.sql.shuffle.partition", "8")\
+    .config("spark.executor.memory", "8g")\
+    .config("spark.driver.memory", "2g")\
+    .config("spark.sql.shuffle.partition", "10")\
     .config("spark.executor.cores", "8")\
     .getOrCreate()
 spark.sparkContext.setCheckpointDir("./myCheckPointDir")
 # config("spark.sql.shuffle.partitions", "10")\
 # spark.sparkContext.setLogLevel("DEBUG")
 spark.sparkContext.setLogLevel("ERROR")
-webbrowser.open("http://localhost:4040")
+# webbrowser.open("http://localhost:4040")
 # conf = SparkConf().setMaster("spark
 # ://192.168.10.100:8080").setAppName("test").set("spark.driver.host", "192.168.10.100")
 for i in spark.sparkContext._conf.getAll():
@@ -64,6 +64,8 @@ si_model = stringIndexer.fit(input_data)
 td = si_model.transform(input_data)
 # 将异常列名替换掉
 input_data = td.select(["id", "describe", "educationBackground", "position"])
+# 模型推荐的职业是产品经典
+# td.select("*").where("id = 8").write.csv("./data/8.csv")
 # input_data = td.withColumnRenamed("_c0", "id")
 td.show()
 
@@ -83,7 +85,7 @@ result = input_data.select("id", "describe").rdd.groupByKey()\
 
 def seg_sentence(content): # 使用jieba分词，并清洗掉特殊字符
     lit = [i for i in jieba.cut(content, use_paddle=False)]
-    special_characters = "“”（；-：、，-。！!@#$%^&*()_+{}[]|\:;'<>?,./\"【】1234567890）"
+    special_characters = "“”（；-：、，-。！!@#$%^&*()_+{}[]|\:;'<>?,./\"【】1234567890）．"
     lit = [string for string in lit if not any(char in special_characters for char in string)]
     # special_characters = "（；，-：、！!@#$%^&*()_+{}[]|\:;'<>?,./\"【】）"
     # lit = [string for string  lit if not any(char in special_characters for char in string)]
@@ -103,7 +105,7 @@ print("输出split_df")
 split_df = split_df.select(["id", "words"])
 split_df.show()
 
-split_df.select(["id"]).groupby("id").count().alias("t1").where("t1.count > 1").show()
+# split_df.select(["id"]).groupby("id").count().alias("t1").where("t1.count > 1").show()
 # from pyspark.ml.feature import HashingTF
 from pyspark.ml.feature import IDF
 # 因为HashingTF无法获取词索引关系，所以将tf替换为countVectorizer
@@ -204,7 +206,7 @@ temp.show()
 
 def genera_vector(list1, list2):
     """
-    判断list2中的词语是否在list1中出现，如果出现，则返回列表对应位置为次数，否则为0
+    判断list2中的词语是否在list1中出现，如果出现，则返回列表对应位置为1，否则为0
     :param list1:
     :param list2:
     :return:
@@ -217,7 +219,7 @@ def genera_vector(list1, list2):
     for word in list1:
         if word in key:
             index = dic[word]
-            result[index] += 1
+            result[index] = 1
     return result
 
 def concatenate_columns(col1, col2):
@@ -233,6 +235,9 @@ def concatenate_columns(col1, col2):
 temp = temp.withColumnRenamed("collect_list(k)", "vital_words")
 temp.show()
 concatenate_columns = functions.udf(concatenate_columns, ArrayType(IntegerType()))
+
+# temp.select("vital_words").where("id = 8").limit(1).rdd.repartition(1).saveAsTextFile("test/test.txt")
+
 temp = temp.withColumn("features", concatenate_columns("words", "vital_words"))
 
 feature_df = temp.select(["id", "features"])
@@ -262,73 +267,90 @@ feature_df.createTempView("feature_df")
 count_df = spark.sql("""
 select id, count(id) as number from feature_df group by id having number > 100 
 """)
+# count_df.write.csv("./count_df.csv")
 count_df.show()
 count_df.cache()
 ids = count_df.select("id").rdd.map(lambda x: x.id).collect()
 broadcastVar = spark.sparkContext.broadcast(ids)
 # count_df = feature_df.selectExpr(["id", "count(id) as number"])
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+
 for id in broadcastVar.value:
-    # 只有超过10条数据的职业，才能被使用
-    # number = feature_df.where("id = {}".format(id)).selectExpr(["count(id) as number"]).rdd.collect()
-    # print(number[0]["number"])
-    # if(number[0]["number"] < 10):
-        # print(id)
-        # continue
-    # count_df.select("")
     print(id)
-    true_df = feature_df.selectExpr(["id", "features"]).where("id = {}".format(id))
-    true_df.show(truncate=False)
-    true_df = true_df.withColumn("flag", functions.lit(1))
-    import random
-    # lineNumber = (int)(random.gauss(1, number[0]["number"]))
-    # print(lineNumber)
-    # lineBroadcast = spark.sparkContext.broadcast(lineNumber)
-    lineNumber = count_df.select("number").where("id = {}".format(id)).rdd.map(lambda x: x.number).collect()
-    print(lineNumber)
-    lineNumber = int((random.random() * lineNumber[0] + 1))
-    false_df = feature_df.selectExpr(["id", "features"]).where(" id != {}".format(id)).limit(lineNumber)
-    false_df = false_df.withColumn("flag", functions.lit(0))
+    if id == 8:
+        # 只有超过100条数据的职业，才能被使用
+        # number = feature_df.where("id = {}".format(id)).selectExpr(["count(id) as number"]).rdd.collect()
+        # print(number[0]["number"])
+        # if(number[0]["number"] < 10):
+            # print(id)
+            # continue
+        # count_df.select("")
+        # print(id)
+        true_df = feature_df.selectExpr(["id", "features"]).where("id = {}".format(id))
+        true_df.show(truncate=False)
+        true_df = true_df.withColumn("flag", functions.lit(1))
+        import random
+        # lineNumber = (int)(random.gauss(1, number[0]["number"]))
+        # print(lineNumber)
+        # lineBroadcast = spark.sparkContext.broadcast(lineNumber)
+        lineNumber = count_df.select("number").where("id = {}".format(id)).rdd.map(lambda x: x.number).collect()
+        print(lineNumber)
+        lineNumber = int((random.random() * lineNumber[0] + 1))
+        false_df = feature_df.selectExpr(["id", "features"]).where(" id != {}".format(id)).limit(lineNumber)
+        false_df = false_df.withColumn("flag", functions.lit(0))
 
-    """
-    根据列名将两个DataFrame拼接在一起
-    使用unionByName而不是union方法，因为union方法会根据DataFrame的位置进行拼接
-    只要DataFrame对应位置数据类型相同即可完成拼接，
-    而unionByName会根据列名和类型名进行拼接
-    
-    注意: unionByName 在spark2.3时才有
-    """
-    orgin_df = true_df.unionByName(false_df)
-    array_to_vector = functions.udf(lambda arr: Vectors.dense(arr), VectorUDT())
-    orgin_df = orgin_df.withColumn("vector_col", array_to_vector("features"))
-    orgin_df.show()
+        """
+        根据列名将两个DataFrame拼接在一起
+        使用unionByName而不是union方法，因为union方法会根据DataFrame的位置进行拼接
+        只要DataFrame对应位置数据类型相同即可完成拼接，
+        而unionByName会根据列名和类型名进行拼接
+        
+        注意: unionByName 在spark2.3时才有
+        """
+        orgin_df = true_df.unionByName(false_df)
 
-    splits = orgin_df.randomSplit([0.7, 0.3])
-    print(splits)
-    train_df = splits[0]
-    test_df = splits[1]
-    train_df.show()
-    test_df.show()
-    log_reg_model = LogisticRegression(featuresCol="vector_col", labelCol="flag", maxIter=10, regParam=0.3, elasticNetParam=0.8)\
-        .fit(train_df.select(["vector_col", "flag"]))
-    print("objective history")
-    for objecttive in log_reg_model.summary.objectiveHistory:
-        print(objecttive)
-    # 评估模型
-    # print param coefficient and interceptVector（系数和截距）
-    print("coefficients："+str(log_reg_model.coefficients))
-    print("intercept"+str(log_reg_model.intercept))
-    predict = log_reg_model.transform(test_df.selectExpr("vector_col"))
-
-    # test_df.show()
-    # print(result)
-    predict.show()
-
-    print(predict.where("prediction != flag").count())
-    print(predict.count())
-    # MulticlassClassificationEvaluator(labelCol=)
-    # break
-    # false_df =
+        
+        array_to_vector = functions.udf(lambda arr: Vectors.dense(arr), VectorUDT())
+        orgin_df = orgin_df.withColumn("vector_col", array_to_vector("features"))
+        orgin_df.show()
+        # orgin_df.write.text("./orign_data.txt")
+        splits = orgin_df.randomSplit([0.7, 0.3])
+        print(splits)
+        train_df = splits[0]
+        test_df = splits[1]
+        train_df.show()
+        test_df.show()
+        log_reg_model = LogisticRegression(featuresCol="vector_col", labelCol="flag", maxIter=100, regParam=0.3, elasticNetParam=0.01)\
+            .fit(train_df.select(["vector_col", "flag"]))
+        log_reg_model.save("./model/logical_model")
+        print("objective history")
+        for objecttive in log_reg_model.summary.objectiveHistory:
+            print(objecttive
+                  )
+        # 评估模型
+        # print param coefficient and interceptVector（系数和截距）
+        print("coefficients：{}".format(log_reg_model.coefficients))
+        print("intercept"+str(log_reg_model.intercept))
+        predict = log_reg_model.transform(test_df.selectExpr("vector_col"))
+        # print(log_reg_model.intersect)
+        # test_df.show()
+        # print(result)
+        predict.show()
+        print(id)
+        print(predict.where("prediction != flag").count())
+        print(predict.count())
+        import pandas as pd
+        print()
+        log = log_reg_model.coefficients
+        # print(log_reg_model.coefficients[0])
+        # for elemnt in log_reg_model.coefficients[1]:
+        #     print(elemnt)
+        # for element in log_reg_model.coefficients[2]:
+        #     print(element)
+        # pd.DataFrame(log_reg_model.intercept).to_csv("./param.csv")
+        # MulticlassClassificationEvaluator(labelCol=)
+        # break
+        # false_df =
 
 # def gener_vector():
 #     """
