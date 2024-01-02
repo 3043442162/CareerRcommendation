@@ -1,10 +1,12 @@
 package com.csjk.controller.util
 
+import java.nio.charset.StandardCharsets
+
 import org.apache.spark.ml.classification.LogisticRegressionModel
 import org.apache.spark.ml.linalg
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 //import org.apache.spark.ml.linalg.Vector
-//import org.apache.spark.mllib.linalg
+//import org.apache.spark.mllib.linalg+
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.rdd.RDD
 
@@ -13,6 +15,7 @@ class SparkUtil() {
     val spark = SparkSession.builder()
       .master("local")
       .getOrCreate()
+
 
     val model = LogisticRegressionModel.load("E:\\pythonProject\\MachineLearning\\Recommend\\model\\logical_model");
 

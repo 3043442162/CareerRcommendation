@@ -43,37 +43,6 @@ public class PositionController {
         SparkUtil uti = new SparkUtil();
         double predict = uti.predict(vector);
 
-//
-//        SparkSession spark = SparkSession.builder()
-//                .master("local")
-//                .getOrCreate();
-//        Vector dense = Vectors.dense(vector);
-//
-//
-//        LogisticRegressionModel model = LogisticRegressionModel.load("E:\\pythonProject\\MachineLearning\\Recommend\\model\\logical_model");
-//        SparkContext sc = spark.sparkContext();
-//        SparkUtil sparkUtil = new SparkUtil();
-//        sparkUtil.predict(vector);
-//        sc.parallelize( vector, 1);
-//        spark.createDataFrame(vector, Double.class)
-
-////        List<Double> collect = Arrays.stream(vector).boxed().collect(Collectors.toList());
-//        List<Double> list1 = new ArrayList<>();
-//        for (int i = 0; i < vector.length; i++) {
-//            list1.add(i, vector[i]);
-//        }
-//        List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
-//        JavaRDD<Integer> distData = sc.parallelize(data);
-//        JavaRDD<Double> parallelize = sc.parallelize(list1);
-//        List<StructField> reportFields = new ArrayList<StructField>();
-//        reportFields.add(DataTypes.createStructField("vector_col", DataTypes.DoubleType, true));
-//
-//        StructType details = new StructType(new StructField[]{
-//                new StructField("vector_col", DataTypes.DoubleType, false, Metadata.empty()),
-//        });
-//        spark.createDataFrame(collect, details);
-//        System.out.println(Arrays.toString(vector));
-//        System.out.println(code);
         if (predict == 1.0){
             return "您适合成为一名产品经理";
         }else {

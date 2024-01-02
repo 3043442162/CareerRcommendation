@@ -3,3 +3,5 @@ server:
 spring:
   application:
     name: position_web
+#logging:
+#  level: error

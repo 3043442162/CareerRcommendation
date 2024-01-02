@@ -102,7 +102,7 @@
             event.preventDefault();
             const code = codeArea.value;
             var xhr = new XMLHttpRequest();
-            xhr.open("GET", 'http://localhost:8082/position/result?code=' + encodeURIComponent(code), true)
+            xhr.open("GET", 'http://localhost:8082/v2/result?code=' + encodeURIComponent(code), true)
             xhr.send()
 
             // xhr.onreadystatechange = function(){
