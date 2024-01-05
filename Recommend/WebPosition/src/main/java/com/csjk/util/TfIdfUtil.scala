@@ -1,4 +1,4 @@
-package com.csjk.controller.util
+package com.csjk.util
 
 import java.nio.file.Paths
 import java.util
@@ -24,7 +24,7 @@ class TfIdfUtil {
     val chars = rdd.collect()
 
     val frame = rdd.toDF("token")
-    val jobs = Array("高端技术职位","移动开发","硬件开发","运维","企业软件","测试","前端开发","后端开发","项目管理","dba")
+    val jobs = Array("移动开发","硬件开发","运维","企业软件","测试","前端开发","后端开发","项目管理","dba")
     val models =new  Array[PipelineModel](10)
     for (i <- jobs.indices){
       val str = jobs(i)

@@ -1,4 +1,4 @@
-package com.csjk.controller.util
+package com.csjk.util
 
 import java.nio.charset.StandardCharsets
 

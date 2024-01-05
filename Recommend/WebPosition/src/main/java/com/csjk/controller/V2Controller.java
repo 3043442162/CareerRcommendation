@@ -1,6 +1,6 @@
 package com.csjk.controller;
 
-import com.csjk.controller.util.TfIdfUtil;
+import com.csjk.util.TfIdfUtil;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

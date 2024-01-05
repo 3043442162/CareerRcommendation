@@ -1,6 +1,6 @@
 package com.csjk.controller;
 
-import com.csjk.controller.util.SparkUtil;
+import com.csjk.util.SparkUtil;
 import com.huaban.analysis.jieba.JiebaSegmenter;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/position")
